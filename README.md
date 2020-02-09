@@ -1,5 +1,4 @@
-# how to run
-
+# How to run
 - Go to the Spotizzle main folder.
 - npm install
 - npm run browser
@@ -7,23 +6,21 @@
     - OR
 - npm run application
 
-
-# todo
+# Todo
 - Connect to spotify.
 - Get a list of playlists.
 - Get the selected playlist from previously mentioned playlists.
 - Put the excluded from git information on a server.
 - Test deploy: Host the authorization code on a server and generate an electron executable to test the application.
 
-# extra / dev
+# Extra / dev
 - Fix live server/live reload and open it in chrome.
 - Add linters.
 
-# choices
+# Choices
 - Spotify Authorization code flow, does require a server but is safe and does give a refresh token. 
 
-
-# electron
+# Electron
 **Use this app along with the [Electron API Demos](https://electronjs.org/#get-started) app for API code examples to help you get started.**
 
 - `package.json` - Points to the app's main file and lists its details and dependencies.
@@ -35,7 +32,6 @@ You can learn more about each of these components within the [Quick Start Guide]
 Note: If you're using Linux Bash for Windows, [see this guide](https://www.howtogeek.com/261575/how-to-run-graphical-linux-desktop-applications-from-windows-10s-bash-shell/) or use `node` from the command prompt.
 
 ## Resources for Learning Electron
-
 - [electronjs.org/docs](https://electronjs.org/docs) - all of Electron's documentation
 - [electronjs.org/community#boilerplates](https://electronjs.org/community#boilerplates) - sample starter apps created by the community
 - [electron/electron-quick-start](https://github.com/electron/electron-quick-start) - a very basic starter Electron app
