@@ -7,10 +7,10 @@
 - npm run application
 
 # Todo
-- Connect to spotify.
-- Get a list of playlists.
-- Get the selected playlist from previously mentioned playlists.
-- Put the excluded from git information on a server.
+- Connect to spotify --> basic version done. Improve.
+- Get a list of playlists --> basic version done. Improve.
+- Get the selected playlist from previously mentioned playlists --> basic version done. Improve.
+- Put the private.js on a server and extract keys/tokens/etc..
 - Test deploy: Host the authorization code on a server and generate an electron executable to test the application.
 
 # Extra / dev
