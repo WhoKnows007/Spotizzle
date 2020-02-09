@@ -1,22 +1,33 @@
 {
-  "name": "electron-quick-start",
-  "version": "1.0.0",
-  "description": "A minimal Electron application",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron ."
-  },
-  "repository": "https://github.com/electron/electron-quick-start",
-  "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial",
-    "demo"
-  ],
-  "author": "GitHub",
-  "license": "CC0-1.0",
-  "devDependencies": {
-    "electron": "^8.0.0"
-  }
+    "name": "Spotizzle",
+    "version": "1.0.0",
+    "description": "Spotify UI with shortcuts",
+    "main": "main.js",
+    "scripts": {
+        "spotify:authorization": "node app.js",
+        "view:electron": "electron .",
+        "build:scss": "node-sass --recursive --quiet  --output-style compressed scss/main.scss css/main.min.css ",
+        "watch:scss": "npm run build:scss && npm run build:scss -- -w",
+        "application": "concurrently --kill-others \"npm run watch:scss\" \"npm run spotify:authorization\" \"npm run view:electron\"",
+        "browser": "concurrently --kill-others \"npm run watch:scss\" \"npm run spotify:authorization\""
+    },
+    "repository": "https://github.com/whoknows007/spotizzle",
+    "keywords": [
+        "Spotify UI"
+    ],
+    "author": "WhoKnows007",
+    "license": "",
+    "devDependencies": {
+        "bootstrap": "^4.4.1",
+        "concurrently": "^5.1.0",
+        "electron": "^8.0.0",
+        "node-sass": "^4.13.1"
+    },
+    "dependencies": {
+        "cookie-parser": "1.3.2",
+        "cors": "^2.8.4",
+        "express": "~4.16.0",
+        "querystring": "~0.2.0",
+        "request": "~2.83.0"
+    }
 }
