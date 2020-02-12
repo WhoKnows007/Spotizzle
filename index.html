@@ -70,7 +70,7 @@
 	</dl>
 </script>
 
-
+<!-- replace with npm versions -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 <script src="/script/index.js" type="module"></script>
@@ -98,24 +98,24 @@
 
         } else {
             if (access_token) {
-                // render oauth info
+                // render template with oauth tokens
                 oauthPlaceholder.innerHTML = oauthTemplate({
                     access_token: access_token,
                     refresh_token: refresh_token
                 });
 
-                $.ajax({
-                    url: 'https://api.spotify.com/v1/me',
-                    headers: {
-                        'Authorization': 'Bearer ' + access_token
-                    },
-                    success: function (response) {
-                        userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+                //get user information and update login/in
+                var doneFunction = function (data, textStatus, jqXHR) {
+                    userProfilePlaceholder.innerHTML = userProfileTemplate(data);
 
-                        $('#login').hide();
-                        $('#loggedin').show();
-                    }
-                });
+                    $('#login').hide();
+                    $('#loggedin').show();
+                };
+                fetchData('https://api.spotify.com/v1/me', {'Authorization': 'Bearer ' + access_token}, [], doneFunction);
+
+				//do this call on the server (app.js) and request the data here
+
+
             } else {
                 // render initial screen
                 $('#login').show();
@@ -124,7 +124,19 @@
 
             //get a now token click handler
             document.getElementById('obtain-new-token').addEventListener('click', function () {
-                $.ajax({
+                getRefreshToken();
+            }, false);
+
+
+            //create ajax calls in a loop
+            //return them as array
+            //$.when.apply($, thearray()).then(function(){
+            // use results.
+            // });
+
+            function getRefreshToken() {
+                console.log('getting new token from /refresh_token, passing the refresh token');
+                return $.ajax({
                     url: '/refresh_token',
                     data: {
                         'refresh_token': refresh_token
@@ -136,83 +148,110 @@
                         refresh_token: refresh_token
                     });
                 });
-            }, false);
-
+            };
 
             //get all playlists from current user
-            var getCurrentUser = $.ajax({
-                url: 'https://api.spotify.com/v1/me',
-                headers: {
-                    'Authorization': 'Bearer ' + access_token
-                },
-                success: function (response) {
-                    userProfilePlaceholder.innerHTML = userProfileTemplate(response);
-
-                    $('#login').hide();
-                    $('#loggedin').show();
-                }
-            });
-
-            var getUserPlaylists = getCurrentUser.then(function (response) {
-                user_id = response.id;
-
+            function getCurrentUser() {
                 return $.ajax({
-                    url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
+                    url: 'https://api.spotify.com/v1/me',
                     headers: {
                         'Authorization': 'Bearer ' + access_token
                     },
-                    dataType: 'json',
-					data: { offset: 0, limit: '5'}
+                    success: function (response) {
+                        userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+
+                        $('#login').hide();
+                        $('#loggedin').show();
+                    }
                 });
-            });
+            }
 
-            var getPlaylistSongs = getUserPlaylists.then(function (response) {
-                playlist_id = response.items[0].id;
+            function getUserPlaylists() {
+                return getCurrentUser().then(function (response) {
+                    user_id = response.id;
 
-                return $.ajax({
-                    url: 'https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks',
-                    headers: {
-                        'Authorization': 'Bearer ' + access_token
-                    },
-                    dataType: 'json',
-                    data: { fields: [], offset: 0, limit: '5'}
+                    return $.ajax({
+                        url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
+                        headers: {
+                            'Authorization': 'Bearer ' + access_token
+                        },
+                        dataType: 'json',
+                        data: {offset: 0, limit: '5'}
+                    });
                 });
-            });
+            };
 
+            function getPlaylistSongs() {
+                return getUserPlaylists().then(function (response) {
+                    playlist_id = response.items[0].id;
 
+                    return $.ajax({
+                        url: 'https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks',
+                        headers: {
+                            'Authorization': 'Bearer ' + access_token
+                        },
+                        dataType: 'json',
+                        data: {fields: [], offset: 0, limit: '5'}
+                    });
+                });
+            };
 
+            function getSongTitlesFromPlaylistSongs() {
+                return getPlaylistSongs().done(function (data) {
 
+                    for (var songCounter = 0; songCounter < data.items.length; songCounter++) {
 
-            getPlaylistSongs.done(function (data) {
+                        var song = data.items[songCounter].track;
 
-                console.log(data.items[0].track.artists)
-                for(var songCounter = 0; songCounter < data.items.length; songCounter++) {
+                        var artists = "";
 
-                    var song = data.items[songCounter].track;
+                        for (var artistCounter = 0; artistCounter < song.artists.length; artistCounter++) {
+                            artists += song.artists[artistCounter].name;
+                        }
 
-                    var artists = "";
+                        console.log(song.name + "  ---  " + artists);
+                    }
+                });
+            }
 
-                    for(var artistCounter = 0; artistCounter < song.artists.length; artistCounter++)
-					{
-                        artists += song.artists[artistCounter].name;
-					}
-
-                	console.log(song.name + "  ---  " + artists);
-                }
-            });
-
-            getCurrentUser;
-            getUserPlaylists;
-            getPlaylistSongs;
+//            getCurrentUser();
+//            getUserPlaylists();
+//            getPlaylistSongs();
+//            getSongTitlesFromPlaylistSongs();
         }
 
-        // Generic function to make an AJAX call
-        var fetchData = function (query, dataURL) {
-            // Return the promise
+        //add typescript to easily resolve parameter types
+        function fetchData(url, headers, dataArray, doneFunction = false, failFunction = false, alwaysFunction = false, dataType = 'json', debug = false) {
+            if (debug) {
+                debugger;
+            }
+
             return $.ajax({
-                data: query,
-                dataType: 'json',
-                url: dataURL
+                url: url,
+                headers: headers,
+                data: dataArray,
+                dataType: dataType,
+            }).done(function (data, textStatus, jqXHR) {
+                if (!doneFunction) {
+                    //
+                } else {
+                    doneFunction(data, textStatus, jqXHR);
+                }
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                if (!failFunction) {
+                    console.log('Ajax error: ');
+                    console.log(jqXHR);
+                    console.log(textStatus);
+                    console.log(errorThrown);
+                } else {
+                    failFunction();
+                }
+            }).always(function (data, textStatus, jqXHR) {
+                if (!alwaysFunction) {
+                    //hide loader
+                } else {
+                    alwaysFunction();
+                }
             });
         };
 

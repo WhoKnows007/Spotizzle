@@ -6,6 +6,11 @@
     - OR
 - npm run application
 
+# app.js /server / nodejs debugging
+Run app.js with debug configuration in the menu.
+Do not start the npm run browser, since both will run on :8888, use either one of the two.
+Don't forget to restart the server/debug session for each change.
+
 # Todo
 - Connect to spotify --> basic version done. Improve.
 - Get a list of playlists --> basic version done. Improve.
