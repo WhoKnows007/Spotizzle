@@ -29,7 +29,6 @@ let cors = require('cors');
 let querystring = require('querystring');
 let cookieParser = require('cookie-parser');
 
-
 let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect uri (set in the spotify developer dashboard)
 
 (async () => {
