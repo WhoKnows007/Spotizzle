@@ -17,11 +17,12 @@ Don't forget to restart the server/debug session for each change.
 - Get the selected playlist from previously mentioned playlists --> basic version done. Improve.
     - replacing require with axion. First method (refresh token) --> success.
     - refactor/organize ajax server and client side.
+    - FE: getAllSongsFromPlaylist(playlistId) BE: fire required ajax requests until that is finished.
     - add general structure, also in separate files if possible.
-- Create a basic design to show the playlists and allow selecting one to show it's songs.
-- Add custom shortcuts. Working on desktop without focus and in the browser with. (pref without focus too).
-- Add audio player.
-- Put the private.js on a server and extract keys/tokens/etc..
+- Create a basic design to show the playlists and allow selecting one to show it's songs --> basic version done. Improve.
+- Add custom shortcuts. Working on desktop without focus and in the browser with. (pref without focus too) --> basic version done. Improve.
+- Add audio player --> basic version done. Improve.
+- Put the private.js on a server and extract keys/tokens/etc.
 - Test deploy: Host the authorization code on a server and generate an electron executable to test the application.
 
 # Extra / dev

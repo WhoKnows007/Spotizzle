@@ -32,11 +32,8 @@ let cookieParser = require('cookie-parser');
 let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect uri (set in the spotify developer dashboard)
 
 (async () => {
-    /**
-     * Generates a random string containing numbers and letters
-     * @param  {number} length The length of the string
-     * @return {string} The generated string
-     */
+
+     // Generates a random string containing numbers and letters
     let generateRandomString = function (length) {
         let text = '';
         let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -47,9 +44,6 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
         return text;
     };
 
-    let stateKey = 'spotify_auth_state';
-
-
     let app = express();
 
     app.use(express.static(__dirname))
@@ -58,9 +52,8 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
 
     //express routing path return
     app.get('/login', function (req, res) {
-        console.log("/login called");
         let state = generateRandomString(16);
-        res.cookie(stateKey, state);
+        res.cookie('spotify_auth_state', state);
 
         // your application requests authorization
         let scope = 'user-read-private user-read-email';
@@ -75,12 +68,10 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
     });
 
     app.get('/callback', function (req, res) {
-        // your application requests refresh and access tokens
-        // after checking the state parameter
-
+        // your application requests refresh and access tokens after checking the state parameter
         let code = req.query.code || null;
         let state = req.query.state || null;
-        let storedState = req.cookies ? req.cookies[stateKey] : null;
+        let storedState = req.cookies ? req.cookies['spotify_auth_state'] : null;
 
         if (state === null || state !== storedState) {
             res.redirect('/#' +
@@ -88,7 +79,7 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
                     error: 'state_mismatch'
                 }));
         } else {
-            res.clearCookie(stateKey);
+            res.clearCookie('spotify_auth_state');
             let authOptions = {
                 url: 'https://accounts.spotify.com/api/token',
                 form: {
@@ -135,31 +126,13 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
         }
     });
 
+    app.get('/getAllSongsByPlaylistId', function (req, res) {
+
+    });
 
     app.get('/refresh_token', function (req, res) {
-
         // requesting access token from refresh token
         let refresh_token = req.query.refresh_token;
-        let authOptions = {
-            url: 'https://accounts.spotify.com/api/token',
-            headers: {'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64'))},
-            form: {
-                grant_type: 'refresh_token',
-                refresh_token: refresh_token
-            },
-            json: true
-        };
-
-        //replace this call by axios
-        // request.post(authOptions, function (error, response, body) {
-        //     if (!error && response.statusCode === 200) {
-        //         let access_token = body.access_token;
-        //         res.send({
-        //             'access_token': access_token
-        //         });
-        //     }
-        // });
-
 
         function a() {
             return axios({
@@ -197,6 +170,13 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
             }));
     });
 
+
+
+
     console.log('Listening on port ' + port + '   localhost:' + port);
     app.listen(port);
 })();
+
+async function asyncAxiosRequest() {
+
+}

@@ -1,6 +1,21 @@
-$base-color: white;
+$audio-player-height: 70px;
+$header-height: 40px;
 
-* {
-    color: black;
-    background-color: $base-color;
+html {
+    height: 100%;
+}
+
+body {
+    padding-top: $header-height;
+    margin-bottom: $audio-player-height;
+    height: 100%;
+    overflow-y: scroll;
+}
+
+.c-header {
+    height: $header-height;
+}
+
+.c-audio-player {
+    height: $audio-player-height;
 }
