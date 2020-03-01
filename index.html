@@ -2,8 +2,18 @@
 <html>
 <head>
 	<title>Example of the Authorization Code flow with Spotify</title>
-	<link rel="stylesheet" type="text/css" href="css/main.min.css">
+	<!--add favicon-->
+	<!-- Note: all style and script file paths are redirected from the server -->
+	<link href="css/main.min.css" rel="stylesheet" type="text/css">
+
+	<!-- pick one: dev or production (change this to one server setting?)-->
+	<!--<link href="/css/bootstrap.min.css" rel="stylesheet">-->
+	<link href="/css/bootstrap.css" rel="stylesheet">
+
 	<style type="text/css">
+		/*div[id*="-template"] {*/
+		/*display: none;*/
+		/*}*/
 		#login-template, #loggedin-template, #user-profile-template, #oauth-template, #error-template, #title-template, #footer-template, #playlists-template {
 			display: none;
 		}
@@ -14,14 +24,24 @@
 
 <div class="h-100">
 	<div class="fixed-top">
-		<div class="c-header  d-flex  flex-column  align-items-center  justify-content-center  bg-danger">
-			<div id="title"><!-- placeholder-title-template --></div>
-			<div id="error"><!-- placeholder-error-template --></div>
+		<div class="container-fluid  c-header  bg-danger">
+			<div class="row  h-100">
+				<div class="col-4  align-self-center">
+					<div id="menu"></div>
+				</div>
+				<div class="col-4  align-self-center  flex-column  justify-content-center  text-center">
+					<div id="title" class="text-center"><!-- placeholder-title-template --></div>
+					<div id="error"><!-- placeholder-error-template --></div>
+				</div>
+				<div class="col-4  d-flex  align-self-end  justify-content-end">
+					<div id="user-profile"></div>
+				</div>
+			</div>
 		</div>
 	</div>
+	<div id="loggedIn"></div>
 	<div id="playlists"></div>
 	<div id="songs"></div>
-	<div id="user-profile" class="h-100"></div>
 	<div id="oauth" class="h-100"></div>
 	<div id="login" class="h-100"></div>
 	<div id="footer"></div>
@@ -52,7 +72,7 @@
 	</div>
 </script>
 
-<script id="loggedin-template" type="text/x-handlebars-template">
+<script id="loggedIn-template" type="text/x-handlebars-template">
 	<!--<div id="user-profile"></div>-->
 	<!--<div id="oauth"></div>-->
 	<button id="obtain-new-token" class="btn btn-primary  my-2">Obtain new token using the refresh token</button>
@@ -64,10 +84,9 @@
 			{{display_name}}
 		</button>
 		<div class="dropdown-menu dropdown-menu-right">
-			<a class="dropdown-item" href="#">Regular link</a>
-			<a class="dropdown-item active" href="#">Active link</a>
-			<div class="dropdown-divider"></div>
-			<a class="dropdown-item" href="#">Another link</a>
+			<button class="dropdown-item" type="button">Action</button>
+			<button class="dropdown-item" type="button">Another action</button>
+			<button class="dropdown-item" type="button">Something else here</button>
 		</div>
 	</div>
 </script>
@@ -85,6 +104,10 @@
 
 <script id="title-template" type="text/x-handlebars-template">
 	<span>{{title}}</span>
+</script>
+
+<script id="menu-template" type="text/x-handlebars-template">
+	<span>{{menu}}</span>
 </script>
 
 <script id="playlists-template" type="text/x-handlebars-template">
@@ -121,10 +144,21 @@
 
 <!-- replace with npm versions -->
 <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 <script src="https://sdk.scdn.co/spotify-player.js"></script> <!--Playing audio with spotify-->
 
-<!--<script src="/script/index.js" type="module"></script>-->
+
+<!-- styles for production (paths redirected to correct node_modules by the node server -->
+<!--<script src="/js/jquery.min.js"></script>-->
+<!--<script src="/js/popper.min.js"></script>-->
+<!--<script src="/js/bootstrap.min.js"></script>-->
+
+<!--styles for development (paths redirected to correct node_modules by the node server -->
+<script src="/js/jquery.js"></script>
+<script src="/js/popper.js"></script>
+<script src="/js/bootstrap.js"></script>
+<!-- local -->
+<script src="/js/index.js"></script>
+
 
 <script>
     //todo: test with a free and a premium spotify account.
@@ -151,10 +185,12 @@
                 },
                 oauth: {},
                 login: {},
-                userProfile: {},
+                userProfile: {display_name: 'Not logged in.'},
                 title: {title: 'Spotizzle'},
+                menu: {menu: 'Menu'},
                 playlists: {playlists: []},
-                songs: {songs: []}
+                songs: {songs: []},
+                loggedIn: {},
             };
 
             //get the footer and pass a template with a model. Default application state hide/show after.
@@ -190,6 +226,17 @@
             title.innerHTML = Handlebars.compile(document.getElementById('title-template').innerHTML)(viewModel.title);
             title.style.display = 'none';
 
+            var menu = document.getElementById('menu');
+            menu.innerHTML = Handlebars.compile(document.getElementById('menu-template').innerHTML)(viewModel.menu);
+            menu.style.display = 'none';
+
+            var loggedIn = document.getElementById('loggedIn');
+            loggedIn.innerHTML = Handlebars.compile(document.getElementById('loggedIn-template').innerHTML)(viewModel.loggedIn);
+            loggedIn.style.display = 'none';
+
+            // since a lot of calls depend on other calls, keep the states of which calls have successfully executed
+            var promises = {};
+
 
             //global variables
             var params = getHashParams();
@@ -215,6 +262,7 @@
                 //update view
                 title.innerHTML = Handlebars.compile(document.getElementById('title-template').innerHTML)(viewModel.title);
                 title.style.display = 'block';
+                menu.style.display = 'block';
                 footer.style.display = 'block';
 
                 viewModel.oauth = {
@@ -222,34 +270,51 @@
                     refresh_token: refresh_token,
                 };
                 oauth.innerHTML = Handlebars.compile(document.getElementById('oauth-template').innerHTML)(viewModel.oauth);
+                oauth.style.display = 'block';
 
+                //create the audio player if there is none
+                if (!player) {
+                    player = new Spotify.Player({
+                        name: 'A Spotify Web SDK Player',
+                        getOAuthToken: callback => {
+                            callback(access_token);
+                        },
+                        volume: 0.1
+                    });
+                }
+
+//                Remove all api.spotify.com urls from this file and do those calls on the server!
 
                 //get user information and update login/in
                 let doneFunction = function (data, textStatus, jqXHR) {
+//                    console.log('this authorization the same as get current user?');
 
-                    //update view
+//                    //update view
                     viewModel.userProfile = {
-                        display_name: 'test'
+                        display_name: data.display_name,
+                        user_id: data.id
                     };
+
                     userProfile.innerHTML = Handlebars.compile(document.getElementById('user-profile-template').innerHTML)(viewModel.userProfile);
+                    userProfile.style.display = 'block';
 
-                    $('#login-template').hide();
-                    $('#loggedin-template').show();
+                    login.style.display = 'none';
+                    loggedIn.style.display = 'block';
+
+
                 };
-                fetchData(viewModel, 'https://api.spotify.com/v1/me', {'Authorization': 'Bearer ' + access_token}, [], doneFunction);
 
 
+                promises.authorized = fetchData(viewModel, 'https://api.spotify.com/v1/me', {'Authorization': 'Bearer ' + access_token}, [], doneFunction);
+                console.log('method call to get all playlists.');
+                getUserPlaylists();
+
+                console.log('method call to get all songs from the playlist.');
+                getPlaylistSongs();
                 //get a now token click handler
-//                document.getElementById('obtain-new-token').addEventListener('click', function () {
-//                    getRefreshToken();
-//                }, false);
-
-
-                //create ajax calls in a loop
-                //return them as array
-                //$.when.apply($, thearray()).then(function(){
-                // use results.
-                // });
+                document.getElementById('obtain-new-token').addEventListener('click', function () {
+                    getRefreshToken();
+                }, false);
 
                 function getRefreshToken() {
                     console.log('getting new token from /refresh_token, passing the refresh token');
@@ -270,67 +335,63 @@
                     });
                 };
 
-                //get all playlists from current user
-                function getCurrentUser() {
-                    return $.ajax({
-                        url: 'https://api.spotify.com/v1/me',
-                        headers: {
-                            'Authorization': 'Bearer ' + access_token
-                        },
-                        success: function (response) {
-                            //update view
-                            viewModel.userProfile = {
-                                display_name: 'test'
-                            };
-                            userProfile.innerHTML = Handlebars.compile(document.getElementById('user-profile-template').innerHTML)(viewModel.userProfile);
+                function getUserPlaylists() {
 
-                            $('#login-template').hide();
-                            $('#loggedin-template').show();
-                        }
+                    promises.playlists = $.when.apply($, [promises.authorized]).then(function () {
+                        return $.ajax({
+                            url: '/getAllSongsByPlaylistId',
+                            dataType: 'json',
+                            data: {
+                                access_token: access_token,
+                                user_id: viewModel.userProfile.user_id,
+                                offset: 0,
+                                limit: '5'
+                            }
+                        }).done(function (response, textStatus, jqXHR) {
+                            viewModel.playlists.playlists = response.data.items;
+                            playlists.innerHTML = Handlebars.compile(document.getElementById('playlists-template').innerHTML)(viewModel.playlists);
+                            playlists.style.display = 'block';
+                        }).fail(function (jqXHR, textStatus, errorThrown) {
+                            console.log(jqXHR);
+                            console.log(textStatus);
+                            console.log(errorThrown);
+                        }).always(function () {
+//
+                        });
                     });
                 }
 
-                function getUserPlaylists() {
-                    return getCurrentUser().then(function (response) {
-                        user_id = response.id;
+                function getPlaylistSongs() {
 
+                    promises.playlistsongs = $.when.apply($, [promises.authorized, promises.playlists]).then(function () {
+
+                        //todo: Change this call to be done on and to the server
                         return $.ajax({
-                            url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
-                            headers: {
-                                'Authorization': 'Bearer ' + access_token
-                            },
-                            dataType: 'json',
-                            data: {offset: 0, limit: '5'}
-                        });
-                    });
-                };
-
-                function getPlaylistSongs(clickedPlaylistId) {
-                    return getUserPlaylists().then(function (response) { //userplaylists retrieved. update view and add click handler
-                        viewModel.playlists.playlists = response.items;
-                        playlists.innerHTML = Handlebars.compile(document.getElementById('playlists-template').innerHTML)(viewModel.playlists);
-                        playlists.style.display = 'block';
-
-                        $(".js-playlist").click(function (e) {
-                            console.log("Get songs from clicked playlist");
-                            getSongTitlesFromPlaylistSongs($(e.currentTarget).data("id"));
-                        });
-
-//                        currentPlaylist = viewModel.playlists.playlists[0].id;
-
-                        return $.ajax({
-                            url: 'https://api.spotify.com/v1/playlists/' + clickedPlaylistId + '/tracks',
+                            url: 'https://api.spotify.com/v1/playlists/' + viewModel.playlists.playlists[4].id + '/tracks',
                             headers: {
                                 'Authorization': 'Bearer ' + access_token
                             },
                             dataType: 'json',
                             data: {fields: [], offset: 0, limit: '10'}
+                        }).done(function (response, textStatus, jqXHR) {
+                            //asign items to viewmodel and load template
+//
+//                            viewModel.songs = response.items;
+//                            songs.innerHTML = Handlebars.compile(document.getElementById('songs-template').innerHTML)(viewModel.songs);
+//                            songs.style.display = 'block';
+
+                            getSongTitlesFromPlaylistSongs(response);
+                        }).fail(function (jqXHR, textStatus, errorThrown) {
+                            console.log(jqXHR);
+                            console.log(textStatus);
+                            console.log(errorThrown);
+                        }).always(function () {
+//
                         });
                     });
-                };
+                }
 
-                function getSongTitlesFromPlaylistSongs(playlistId) {
-                    return getPlaylistSongs(playlistId).done(function (data) {
+                function getSongTitlesFromPlaylistSongs(data) {
                         viewModel.songs.songs = [];
 
                         //get the current playlist using currentplaylist in the viewModel.playlists object, add the songs to that found object
@@ -347,9 +408,37 @@
                         songs.innerHTML = Handlebars.compile(document.getElementById('songs-template').innerHTML)(viewModel.songs);
                         songs.style.display = 'block';
 
+
                         $(".js-song").click(function (e) {
-                            playSong($(e.currentTarget).data("id"));
-                        });
+
+                            player.getCurrentState().then(state => {
+                                playSong($(e.currentTarget).data("id"));
+
+                                if (state) {
+                                    player.addListener('ready', ({device_id}) => {
+                                        console.log('Connected with Device ID', device_id);
+                                    });
+                                    //something is playing, replace it with the clicked song
+                                }
+//
+//                                if (!state) {
+//                                    //not playing anything, play the clicked song
+//
+//                                } else{
+//                                    player.togglePlay().then(() => {
+//                                        console.log('Toggled playback!');
+//                                    });
+//								}
+//
+//                                let {
+//                                    current_track,
+//                                    next_tracks: [next_track]
+//                                } = state.track_window;
+//
+//                                console.log('Currently Playing', current_track);
+//                                console.log('Playing Next', next_track);
+                            });
+
                     });
                 }
 
@@ -359,15 +448,6 @@
                     //if autoplaying music does not work ^
                     //required scopes for playing music: ["streaming", "user-read-email", "user-read-private"]
                     //
-
-                    const token = 'BQDfnspHVUllgVTGZqmkaQRXtDTnAsnk1E6k9NOJqpcAkrSxENVjO8ZKuZd_yjVJvwl3E-fyzljXqUIa8_7B7W_WOXn3r1azHb8tdLtQg1CcE2og8jOsybEhdzLUytF5RQpn5YGPA670N4eqzhACV8-v1fPug5_J7ZA';
-                    player = new Spotify.Player({
-                        name: 'A Spotify Web SDK Player',
-                        getOAuthToken: callback => {
-                            callback(token);
-                        },
-                        volume: 0.1
-                    });
 
                     // Called when connected to the player created beforehand successfully
                     player.addListener('ready', ({device_id}) => {
@@ -400,6 +480,17 @@
                         });
                     });
 
+                    player.addListener('player_state_changed',
+                        ({
+                             position,
+                             duration,
+                             track_window: {current_track}
+                         }) => {
+                            console.log('Currently Playing', current_track);
+                            console.log('Position in Song', position);
+                            console.log('Duration of Song', duration);
+                        });
+
                     // Not Ready
                     player.addListener('not_ready', ({device_id}) => {
                         console.log('Device ID has gone offline', device_id);
@@ -424,13 +515,18 @@
                     });
                 }
 
-                getCurrentUser();
-                getUserPlaylists();
-                getPlaylistSongs();
+//                getCurrentUser();
+
 //                getSongTitlesFromPlaylistSongs();
 
+//                console.log("add on clicks");
+                $(".js-playlist").on('click', (function (e) {
+                    console.log("Get songs from clicked playlist");
+//                    getSongTitlesFromPlaylistSongs($(e.currentTarget).data("id"));
+                }));
+
                 window.addEventListener('keyup', function () {
-                    console.log("keyup browser");
+//                    console.log("keyup browser");
                 }, true);
 
 
@@ -452,7 +548,8 @@
                     });
                 });
             }
-        };
+        }
+        ;
 
         //add typescript to easily resolve parameter types
         function fetchData(viewModel, url, headers, dataArray, doneFunction = false, failFunction = false, alwaysFunction = false, dataType = 'json', debug = false) {
@@ -486,6 +583,8 @@
                     error.innerHTML = Handlebars.compile(document.getElementById('error-template').innerHTML)(viewModel.error);
                     error.style.display = 'block';
                     footer.style.display = "none";
+                    oauth.style.display = 'none';
+                    menu.style.display = 'none';
 
                     if (jqXHR.status == 401) {
                         login.style.display = "block";

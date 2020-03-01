@@ -1,5 +1,4 @@
-// spotify_client_id: '09cf5ef78f934e8594a97c7e33bb0121'
-// spotify_secret: 289075d4b5144ee7ad524b2904bcf35b
+
 //
 // Callback/redirect urls:
 // http://localhost:8888/callback

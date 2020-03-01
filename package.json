@@ -20,7 +20,9 @@
     "devDependencies": {
         "bootstrap": "^4.4.1",
         "concurrently": "^5.1.0",
-        "node-sass": "^4.13.1"
+        "jquery": "^3.4.1",
+        "node-sass": "^4.13.1",
+        "popper.js": "^1.16.1"
     },
     "dependencies": {
         "axios": "^0.19.2",

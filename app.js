@@ -1,21 +1,12 @@
 /**
- * This is an example of a basic node.js script that performs
- * the Authorization Code oAuth2 flow to authenticate against
- * the Spotify Accounts.
- *
- * For more information, read
- * https://developer.spotify.com/web-api/authorization-guide/#authorization_code_flow
- *
- * This file should be ran on a server
- * consider if this should be a completely separate project, ( i think so ) since npm dependancies and location of the project are different.
+ server
  */
-
-
 
 let express = require('express'); // Express web server framework
 let request = require('request'); // "Request" library deprecated, replace with ajax? Maybe with bent? https://github.com/mikeal/bent
 
-//bent, handles http requests to this server
+const host = 'localhost';
+const productionStylesAndScripts = true; //either send minified/production ready, or send the dev/debug assets like css and js from node_modules
 
 const axios = require('axios').default; //replace bent and require
 // const getJSON = bent('json')
@@ -33,8 +24,8 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
 
 (async () => {
 
-     // Generates a random string containing numbers and letters
-    let generateRandomString = function (length) {
+    // Generates a random string containing numbers and letters
+    let generateRandomString = (length) => {
         let text = '';
         let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -46,9 +37,27 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
 
     let app = express();
 
+
+    //redirect calls to a different directory, default directory is __dirname, enabling cors and cookieparser (not sure if still needed)
     app.use(express.static(__dirname))
         .use(cors())
         .use(cookieParser());
+
+    if (productionStylesAndScripts) {
+        app.use('/css', express.static(__dirname + '/node_modules/bootstrap/dist/css')); // bootstrap.min.css
+        app.use('/css', express.static(__dirname + '/css')); // my css
+        app.use('/js', express.static(__dirname + '/node_modules/jquery/dist')); // jquery.min.js
+        app.use('/js', express.static(__dirname + '/node_modules/popper.js/dist/umd')); // popper.min.js
+        app.use('/js', express.static(__dirname + '/node_modules/bootstrap/dist/js')); // bootstrap.min.js
+        app.use('/js', express.static(__dirname + '/script')); // my index.min.js (currently no minification file created)
+    } else {
+        app.use('/css', express.static(__dirname + '/node_modules/bootstrap/dist/css')); // bootstrap.css
+        app.use('/css', express.static(__dirname + '/css')); // my css
+        app.use('/js', express.static(__dirname + '/node_modules/jquery/dist')); // jquery.js
+        app.use('/js', express.static(__dirname + '/node_modules/popper.js/dist/umd')); // popper.js
+        app.use('/js', express.static(__dirname + '/node_modules/bootstrap/dist/js')); // bootstrap.js
+        app.use('/js', express.static(__dirname + '/script')); // my index.js
+    }
 
     //express routing path return
     app.get('/login', function (req, res) {
@@ -56,7 +65,7 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
         res.cookie('spotify_auth_state', state);
 
         // your application requests authorization
-        let scope = 'user-read-private user-read-email';
+        let scope = 'streaming user-read-private user-read-email playlist-modify';
         res.redirect('https://accounts.spotify.com/authorize?' +
             querystring.stringify({
                 response_type: 'code',
@@ -66,6 +75,11 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
                 state: state
             }));
     });
+
+    // app.get('/pages/index2', function(req, res) {
+    //     //viewname can include or omit the filename extension
+    //     res.render(__dirname + '/pages/index2.html');
+    // });​​​​​​​​​​
 
     app.get('/callback', function (req, res) {
         // your application requests refresh and access tokens after checking the state parameter
@@ -126,7 +140,32 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
         }
     });
 
+    //res.direct('/anotherpage')
+
     app.get('/getAllSongsByPlaylistId', function (req, res) {
+        var access_token = req.query.access_token;
+        var limit = req.query.limit;
+        var offset = req.query.offset;
+        var user_id = req.query.user_id;
+
+        return axios({
+            url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
+            params: {
+                offset: offset,
+                limit: limit
+            },
+            headers: {
+                'Authorization': 'Bearer ' + access_token,
+            },
+        }).then(function (response) {
+            res.send({
+                status: response.status,
+                data: response.data,
+                headers: response.headers,
+            });
+        }).catch(function (error) {
+            res.json(400, {'error': error})
+        });
 
     });
 
@@ -171,10 +210,9 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
     });
 
 
-
-
-    console.log('Listening on port ' + port + '   localhost:' + port);
-    app.listen(port);
+    app.listen(port, function () {
+        console.log(`Server running on http://${host}:${port}`)
+    });
 })();
 
 async function asyncAxiosRequest() {
