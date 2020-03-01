@@ -15,19 +15,16 @@ Don't forget to restart the server/debug session for each change. (no nodemon at
 - Connect to spotify --> basic version done. Improve.
 - Get a list of playlists --> basic version done. Improve.
 - Get the selected playlist from previously mentioned playlists --> basic version done. Improve.
-    - replacing require with axion. First method (refresh token) --> success.
-    - refactor/organize ajax server and client side.
-    - FE: getAllSongsFromPlaylist(playlistId) BE: fire required ajax requests until that is finished.
-    - add general structure, also in separate files if possible.
+- replacing require with axion. First method (refresh token) --> success.
 - Create a basic design to show the playlists and allow selecting one to show it's songs --> basic version done. Improve.
 - Add custom shortcuts. Working on desktop without focus and in the browser with. (pref without focus too) --> basic version done. Improve.
 - Add audio player --> basic version done. Improve.
 - Fix js/npm integration using a main js file that is easily expandable. --> basic version done.
 - Separate the client and server side ajax calls. --> current, almost finished.
 - Cleanup project structure. (Basic for initial release)
-- Test deploy: Host the authorization code on a server and generate an electron executable to test the application.
 - Add custom shortcuts which were the reason to actually build this shit.
 - Look at licensing/rights.
+- Test deploy: Host the authorization code on a server and generate an electron executable to test the application.
 
 # Todo after first very basic release
 - The big cleanup:
