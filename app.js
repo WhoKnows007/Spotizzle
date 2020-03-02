@@ -5,6 +5,7 @@
 let express = require('express'); // Express web server framework
 let request = require('request'); // "Request" library deprecated, replace with ajax? Maybe with bent? https://github.com/mikeal/bent
 
+
 const host = 'localhost';
 const productionStylesAndScripts = true; //either send minified/production ready, or send the dev/debug assets like css and js from node_modules
 
@@ -66,6 +67,9 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
 
         // your application requests authorization
         let scope = 'streaming user-read-private user-read-email playlist-modify';
+
+        // todo: redirect to other page if user declines spotify authorization, currently shows an error.
+
         res.redirect('https://accounts.spotify.com/authorize?' +
             querystring.stringify({
                 response_type: 'code',
@@ -80,6 +84,27 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
     //     //viewname can include or omit the filename extension
     //     res.render(__dirname + '/pages/index2.html');
     // });​​​​​​​​​​
+
+    app.get('/authorize', function(req, res){
+        var access_token = req.query.access_token;
+
+        return axios({
+            url: 'https://api.spotify.com/v1/me',
+            headers: {
+                'Authorization': 'Bearer ' + access_token,
+            },
+        }).then(function (response) {
+            res.send({
+                status: response.status,
+                data: response.data,
+                headers: response.headers,
+            });
+        }).catch(function (error) {
+            res.json(400, {'error': error})
+        });
+
+
+    });
 
     app.get('/callback', function (req, res) {
         // your application requests refresh and access tokens after checking the state parameter
@@ -140,9 +165,7 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
         }
     });
 
-    //res.direct('/anotherpage')
-
-    app.get('/getAllSongsByPlaylistId', function (req, res) {
+    app.get('/getAllPlaylists', function (req, res) {
         var access_token = req.query.access_token;
         var limit = req.query.limit;
         var offset = req.query.offset;
@@ -156,6 +179,33 @@ let redirect_uri = 'http://localhost:' + port + '/callback'; // Your redirect ur
             },
             headers: {
                 'Authorization': 'Bearer ' + access_token,
+            },
+        }).then(function (response) {
+            res.send({
+                status: response.status,
+                data: response.data,
+                headers: response.headers,
+            });
+        }).catch(function (error) {
+            res.json(400, {'error': error})
+        });
+    });
+
+    app.get('/getAllSongsByPlaylistId', function (req, res) {
+        var access_token = req.query.access_token;
+        var limit = req.query.limit;
+        var offset = req.query.offset;
+        var playlist_id = req.query.playlist_id;
+
+        return axios({
+            url: 'https://api.spotify.com/v1/playlists/' + playlist_id + '/tracks',
+            params: {
+                fields: [],
+                offset: offset,
+                limit: limit
+            },
+            headers: {
+                'Authorization': 'Bearer ' + access_token
             },
         }).then(function (response) {
             res.send({

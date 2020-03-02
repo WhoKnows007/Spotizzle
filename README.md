@@ -1,4 +1,5 @@
 # How to run
+- IF you want to run the server instead of using mine: create a client_id and client_secret in the app.js. Add better instructions later. 
 - Go to the Spotizzle main folder.
 - npm install
 - npm run browser
@@ -21,7 +22,7 @@ Don't forget to restart the server/debug session for each change. (no nodemon at
 - Add audio player --> basic version done. Improve.
 - Fix js/npm integration using a main js file that is easily expandable. --> basic version done.
 - Separate the client and server side ajax calls. --> current, almost finished.
-- Cleanup project structure. (Basic for initial release)
+- Very basic project cleanup.
 - Add custom shortcuts which were the reason to actually build this shit.
 - Look at licensing/rights.
 - Test deploy: Host the authorization code on a server and generate an electron executable to test the application.
@@ -47,9 +48,11 @@ Don't forget to restart the server/debug session for each change. (no nodemon at
 # Extra / dev
 - Fix live server/live reload and open it in chrome.
 - Add linters.
+- Remove Jquery.
 
 # Choices
 - Spotify Authorization code flow, does require a server but is safe and does give a refresh token. 
+- To be able to easily adjust code for a specific scenario, i prefer not to use generic methods for everything. For example one re-useable ajax call function will require a lot of exception and configuration, making it one big complex method instead of multiple smaller, easier to edit ones. Yes this does increase the risc of forgetting to update something in both ajax calls, but that is a risc i much prefer.
 
 # Electron
 **Use this app along with the [Electron API Demos](https://electronjs.org/#get-started) app for API code examples to help you get started.**

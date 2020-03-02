@@ -283,29 +283,7 @@
                     });
                 }
 
-//                Remove all api.spotify.com urls from this file and do those calls on the server!
-
-                //get user information and update login/in
-                let doneFunction = function (data, textStatus, jqXHR) {
-//                    console.log('this authorization the same as get current user?');
-
-//                    //update view
-                    viewModel.userProfile = {
-                        display_name: data.display_name,
-                        user_id: data.id
-                    };
-
-                    userProfile.innerHTML = Handlebars.compile(document.getElementById('user-profile-template').innerHTML)(viewModel.userProfile);
-                    userProfile.style.display = 'block';
-
-                    login.style.display = 'none';
-                    loggedIn.style.display = 'block';
-
-
-                };
-
-
-                promises.authorized = fetchData(viewModel, 'https://api.spotify.com/v1/me', {'Authorization': 'Bearer ' + access_token}, [], doneFunction);
+                authorizeUser();
                 console.log('method call to get all playlists.');
                 getUserPlaylists();
 
@@ -335,19 +313,51 @@
                     });
                 };
 
+                function authorizeUser() {
+
+                    promises.authorized = $.when.apply($, []).then(function () {
+                        return $.ajax({
+                            url: '/authorize',
+                            dataType: 'json',
+                            data: {
+                                access_token: access_token
+                            }
+                        }).done(function (response, textStatus, jqXHR) {
+                            //update view
+                            viewModel.userProfile = {
+                                display_name: response.data.display_name,
+                                user_id: response.data.id
+                            };
+
+                            userProfile.innerHTML = Handlebars.compile(document.getElementById('user-profile-template').innerHTML)(viewModel.userProfile);
+                            userProfile.style.display = 'block';
+
+                            login.style.display = 'none';
+                            loggedIn.style.display = 'block';
+                        }).fail(function (jqXHR, textStatus, errorThrown) {
+                            console.log(jqXHR);
+                            console.log(textStatus);
+                            console.log(errorThrown);
+                        }).always(function () {
+//
+                        });
+                    });
+                }
+
                 function getUserPlaylists() {
 
                     promises.playlists = $.when.apply($, [promises.authorized]).then(function () {
                         return $.ajax({
-                            url: '/getAllSongsByPlaylistId',
+                            url: '/getAllPlaylists',
                             dataType: 'json',
                             data: {
                                 access_token: access_token,
                                 user_id: viewModel.userProfile.user_id,
                                 offset: 0,
-                                limit: '5'
+                                limit: 5
                             }
                         }).done(function (response, textStatus, jqXHR) {
+                            console.log(response.data.items);
                             viewModel.playlists.playlists = response.data.items;
                             playlists.innerHTML = Handlebars.compile(document.getElementById('playlists-template').innerHTML)(viewModel.playlists);
                             playlists.style.display = 'block';
@@ -364,15 +374,15 @@
                 function getPlaylistSongs() {
 
                     promises.playlistsongs = $.when.apply($, [promises.authorized, promises.playlists]).then(function () {
-
-                        //todo: Change this call to be done on and to the server
                         return $.ajax({
-                            url: 'https://api.spotify.com/v1/playlists/' + viewModel.playlists.playlists[4].id + '/tracks',
-                            headers: {
-                                'Authorization': 'Bearer ' + access_token
-                            },
+                            url: '/getAllSongsByPlaylistId',
                             dataType: 'json',
-                            data: {fields: [], offset: 0, limit: '10'}
+                            data: {
+                                access_token: access_token,
+                                playlist_id: viewModel.playlists.playlists[3].id,
+                                offset: 0,
+                                limit: '5'
+                            }
                         }).done(function (response, textStatus, jqXHR) {
                             //asign items to viewmodel and load template
 //
@@ -391,35 +401,35 @@
                     });
                 }
 
-                function getSongTitlesFromPlaylistSongs(data) {
-                        viewModel.songs.songs = [];
+                function getSongTitlesFromPlaylistSongs(response) {
+                    viewModel.songs.songs = [];
 
-                        //get the current playlist using currentplaylist in the viewModel.playlists object, add the songs to that found object
-                        for (let songCounter = 0; songCounter < data.items.length; songCounter++) {
-                            let song = data.items[songCounter].track;
-                            let artists = "";
+                    //get the current playlist using currentplaylist in the viewModel.playlists object, add the songs to that found object
+                    for (let songCounter = 0; songCounter < response.data.items.length; songCounter++) {
+                        let song = response.data.items[songCounter].track;
+                        let artists = "";
 
-                            for (let artistCounter = 0; artistCounter < song.artists.length; artistCounter++) {
-                                artists += song.artists[artistCounter].name;
-                            }
-                            viewModel.songs.songs.push(song);
+                        for (let artistCounter = 0; artistCounter < song.artists.length; artistCounter++) {
+                            artists += song.artists[artistCounter].name;
                         }
+                        viewModel.songs.songs.push(song);
+                    }
 
-                        songs.innerHTML = Handlebars.compile(document.getElementById('songs-template').innerHTML)(viewModel.songs);
-                        songs.style.display = 'block';
+                    songs.innerHTML = Handlebars.compile(document.getElementById('songs-template').innerHTML)(viewModel.songs);
+                    songs.style.display = 'block';
 
 
-                        $(".js-song").click(function (e) {
+                    $(".js-song").click(function (e) {
 
-                            player.getCurrentState().then(state => {
-                                playSong($(e.currentTarget).data("id"));
+                        player.getCurrentState().then(state => {
+                            playSong($(e.currentTarget).data("id"));
 
-                                if (state) {
-                                    player.addListener('ready', ({device_id}) => {
-                                        console.log('Connected with Device ID', device_id);
-                                    });
-                                    //something is playing, replace it with the clicked song
-                                }
+                            if (state) {
+                                player.addListener('ready', ({device_id}) => {
+                                    console.log('Connected with Device ID', device_id);
+                                });
+                                //something is playing, replace it with the clicked song
+                            }
 //
 //                                if (!state) {
 //                                    //not playing anything, play the clicked song
@@ -437,7 +447,7 @@
 //
 //                                console.log('Currently Playing', current_track);
 //                                console.log('Playing Next', next_track);
-                            });
+                        });
 
                     });
                 }
@@ -453,7 +463,9 @@
                     player.addListener('ready', ({device_id}) => {
                         console.log('Ready with Device ID', device_id);
 
-                        const play = ({
+
+                        const play =
+                            function ({
                                           spotify_uri,
                                           playerInstance: {
                                               _options: {
@@ -461,18 +473,22 @@
                                                   id
                                               }
                                           }
-                                      }) => {
-                            getOAuthToken(access_token => {
-                                fetch(`https://api.spotify.com/v1/me/player/play?device_id=${id}`, {
-                                    method: 'PUT',
-                                    body: JSON.stringify({uris: [spotify_uri]}),
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${access_token}`
-                                    },
-                                });
-                            });
-                        };
+                                      })
+							{
+                                getOAuthToken(
+                                    function (access_token) {
+                                        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${id}`, {
+                                            method: 'PUT',
+                                            body: JSON.stringify({uris: [spotify_uri]}),
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Authorization': 'Bearer ' + access_token
+                                            },
+                                        });
+                                    });
+                            };
+
+                        console.log('Play song...');
 
                         play({
                             playerInstance: player,
@@ -486,9 +502,9 @@
                              duration,
                              track_window: {current_track}
                          }) => {
-                            console.log('Currently Playing', current_track);
-                            console.log('Position in Song', position);
-                            console.log('Duration of Song', duration);
+//                            console.log('Currently Playing', current_track);
+//                            console.log('Position in Song', position);
+//                            console.log('Duration of Song', duration);
                         });
 
                     // Not Ready
@@ -500,24 +516,6 @@
                     // creating a new device which will be visible for Spotify Connect
                     player.connect();
                 }
-
-                function getCurrentlyPlaying() {
-                    // Make a call using the token
-                    $.ajax({
-                        url: "https://api.spotify.com/v1/me/player",
-                        type: "GET",
-                        beforeSend: (xhr) => {
-                            xhr.setRequestHeader("Authorization", "Bearer " + access_token);
-                        },
-                        success: (data) => {
-                            console.log(data);
-                        }
-                    });
-                }
-
-//                getCurrentUser();
-
-//                getSongTitlesFromPlaylistSongs();
 
 //                console.log("add on clicks");
                 $(".js-playlist").on('click', (function (e) {
@@ -550,56 +548,6 @@
             }
         }
         ;
-
-        //add typescript to easily resolve parameter types
-        function fetchData(viewModel, url, headers, dataArray, doneFunction = false, failFunction = false, alwaysFunction = false, dataType = 'json', debug = false) {
-            if (debug) {
-                debugger;
-            }
-
-            return $.ajax({
-                url: url,
-                headers: headers,
-                data: dataArray,
-                dataType: dataType,
-            }).done(function (data, textStatus, jqXHR) {
-                if (!doneFunction) {
-                    //
-                } else {
-                    doneFunction(data, textStatus, jqXHR);
-                }
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                if (!failFunction) {
-                    console.log('Fetchdata client side api call error: ');
-                    console.log(jqXHR.status + ': ' + jqXHR.statusText + ' - ' + jqXHR.responseJSON.error.message);
-
-                    //update view
-                    viewModel.error = {
-                        statusCode: jqXHR.status,
-                        error: jqXHR.statusText,
-                        message: jqXHR.responseJSON.error.message,
-                    };
-                    title.style.display = 'none'; //title and error share space, always one of both hidden.
-                    error.innerHTML = Handlebars.compile(document.getElementById('error-template').innerHTML)(viewModel.error);
-                    error.style.display = 'block';
-                    footer.style.display = "none";
-                    oauth.style.display = 'none';
-                    menu.style.display = 'none';
-
-                    if (jqXHR.status == 401) {
-                        login.style.display = "block";
-                    }
-                } else {
-                    failFunction();
-                }
-            }).always(function (data, textStatus, jqXHR) {
-                if (!alwaysFunction) {
-                    //hide loader
-                } else {
-                    alwaysFunction();
-                }
-            });
-        };
 
         // Obtains parameters from the hash of the URL
         function getHashParams() {
