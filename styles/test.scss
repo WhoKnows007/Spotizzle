@@ -1,23 +1,17 @@
 $audio-player-height: 70px;
-$header-height: 40px;
 
 html {
     height: 100%;
 }
 
-* {
-    //color: blue !important;
-}
-
 body {
-    padding-top: $header-height;
+    padding-top: 100px;
     margin-bottom: $audio-player-height;
     height: 100%;
     overflow-y: scroll;
 }
 
 .c-header {
-    height: $header-height;
 }
 
 .c-audio-player {

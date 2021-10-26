@@ -49,5 +49,5 @@ $bootstrap: "../node_modules/bootstrap/scss/";
 // custom bootstrap overrides
 @import "bootstrap_variables_override";
 
-@import 'test';
-@import 'test2';
+@import "test.scss";
+@import "test2.scss";

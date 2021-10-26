@@ -1,4 +1,5 @@
-
+// spotify_client_id: ''
+// spotify_secret:
 //
 // Callback/redirect urls:
 // http://localhost:8888/callback
