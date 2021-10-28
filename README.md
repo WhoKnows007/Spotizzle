@@ -16,6 +16,11 @@ Each of the following needs a new terminal prompt, pick either electron or brows
 - npm run application           to start electron
 - serve                         to simulate a local http server (note the missing npm run) (also included in the npm run browser)
 
+# how to deploy
+Push using: https://github.com/WhoKnows007/Spotizzle.git
+When login required, use the personal access token found here (https://github.com/settings/tokens) as password. 
+~figure out how to release as desktop executable.
+
 # Todo
 scartch the part below, new plan!
 as electron does not like the audio player from spotify, which is required, i decided to not play music in my app.
